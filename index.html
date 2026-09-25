@@ -1806,8 +1806,10 @@ resetForm();
 applySeedIfNewer('启动');
 refreshAll();
 autoSyncFromCsv().then((ok) => {
-  if (ok) 
-// Category drill-down: event delegation (sheet HTML may sit after this script)
+  if (ok) refreshAll();
+}).catch(() => {});
+
+// Category drill-down: always bind (must NOT depend on CSV sync succeeding)
 document.addEventListener('click', (e) => {
   const row = e.target.closest('#reportRank .mm-row.clickable');
   if (row && row.dataset.catKey) {
@@ -1835,9 +1837,6 @@ document.addEventListener('keydown', (e) => {
     }
   }
 });
-
-refreshAll();
-}).catch(() => {});
 
 
 
