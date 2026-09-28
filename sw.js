@@ -1,5 +1,5 @@
 /* MrMoney PWA service worker */
-const CACHE = 'mrmoney-v18';
+const CACHE = 'mrmoney-v19';
 const ASSETS = [
   './',
   './index.html',
