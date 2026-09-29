@@ -180,6 +180,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:14px 0}
 .daily-big{font-size:1.5rem;font-weight:900;color:var(--in)}
 .daily-big.low{color:var(--warn)}
 .daily-big.zero{color:var(--danger)}
+.card .value.neg{color:var(--danger)}
 
 /* Money Mgr report section */
 .mm-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 14px 18px;margin-bottom:12px}
@@ -362,9 +363,9 @@ body {
       <div class="hint" id="dailyHint">日均额度 − 今日已花个人支出；记一笔会马上重算</div>
     </div>
     <div class="card" id="periodCard">
-      <div class="label">本发薪周期个人已花</div>
+      <div class="label">本发薪周期结余</div>
       <div class="value" id="periodPersonal">RM 0</div>
-      <div class="hint" id="periodHint">从上次发薪日到今天 · 待报销不计入</div>
+      <div class="hint" id="periodHint">工资收入 − 个人支出；负数 = 超支多少 · 待报销不计入</div>
     </div>
   </div>
 
@@ -636,8 +637,10 @@ const $ = (id) => document.getElementById(id);
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
 function money(n){
-  const x = Number(n) || 0;
-  return 'RM ' + x.toLocaleString('en-MY', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const x = Number(n);
+  const v = Number.isFinite(x) ? x : 0;
+  const body = Math.abs(v).toLocaleString('en-MY', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return (v < 0 ? 'RM -' : 'RM ') + body;
 }
 
 function todayStr(){
@@ -1230,8 +1233,14 @@ function renderDashboard(){
     const d = tx.date || '';
     return d >= lastPay && d <= today;
   }).reduce((s, tx) => s + (Number(tx.amount) || 0), 0);
-  $('periodPersonal').textContent = money(periodPers);
-  $('periodHint').textContent = `周期 ${lastPay} → ${today} · 待报销不计入`;
+  // 结余 = 本周期工资 − 个人不可报销支出；超支显示为负数
+  const periodNet = salary - periodPers;
+  const periodEl = $('periodPersonal');
+  periodEl.textContent = money(periodNet);
+  periodEl.classList.toggle('neg', periodNet < 0);
+  $('periodCard').classList.toggle('alert-red', periodNet < 0);
+  $('periodHint').textContent =
+    `周期 ${lastPay} → ${today} · 工资 ${money(salary)} − 个人支出 ${money(periodPers)} · 负数 = 超支 · 待报销不计入`;
 
   $('spendCard').classList.toggle('alert-red', personal > living);
   $('spendCard').classList.toggle('alert-amber', personal > living * 0.85 && personal <= living);
